@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>倉庫管理システム</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="/resources/favicon.ico">
+    <link rel="stylesheet" href="resources/layui/css/layui.css" th:href="@{/resources/layui/css/layui.css}" media="all"/>
+    <link rel="stylesheet" th:href="@{/resources/css/public.css}" media="all"/>
+    <link rel="stylesheet" th:href="@{/resources/layui_ext/dtree/dtree.css}" media="all"/>
+    <link rel="stylesheet" th:href="@{/resources/layui_ext/dtree/font/dtreefont.css}" media="all"/>
+    <style>
+        input#search_provideridTree_select_input_id {
+            border-radius: 10px;
+            height: 30px;
+            margin-top: 4px;
+        }
+        input#provideridTree_select_input_id {
+            border-radius: 10px;
+            height: 30px;
+            margin-top: 4px;
+        }
+        input#leaderprovideridTree_select_input_id {
+            border-radius: 10px;
+            height: 30px;
+            margin-top: 4px;
+        }
+        input.layui-input.layui-unselect {
+            border-radius: 10px;
+            height: 30px;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+<!--検索条件-->
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 15px;">
+    <legend>検索条件</legend>
+</fieldset>
+<form action="" method="post" id="searchFrm" lay-filter="searchFrm" class="layui-form">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">倉庫名</label>
+            <div class="layui-input-inline">
+                <select name="houseId" id="select_houseId">
+                    <option value="">-- 倉庫名 --</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">商品名</label>
+            <div class="layui-input-inline">
+                <select name="goodsId" id="select_goodsId">
+                    <option value="">-- 商品名 --</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-input-block" style="text-align: center;padding-right: 15%;">
+            <button type="button" class="layui-btn layui-btn-sm layui-btn-radius" lay-submit="" lay-filter="doSearch"><i
+                    class="layui-icon layui-icon-search layui-icon-normal"></i>検索
+            </button>
+            <button type="reset" class="layui-btn layui-btn-sm layui-btn-radius layui-btn-warm"><i
+                    class="layui-icon layui-icon-refresh"></i><span>リセット</span>
+            </button>
+        </div>
+    </div>
+</form>
+
+<!--検索結果-->
+<div>
+    <table class="layui-hide" id="stockTable" lay-filter="stockTable"></table>
+    <div id="stockToolBar" style="display: none">
+        <button type="button" lay-event="add" class="layui-btn layui-btn-sm layui-btn-normal layui-btn-radius" th:if="${session.user.roleId ==0}">
+            <i class="layui-icon layui-icon-add-1"></i>倉庫追加
+        </button>
+    </div>
+    <div id="stockRowBar" style="display: none;">
+        <button type="button" lay-event="update" class="layui-btn layui-btn-sm layui-btn-radius"><i
+                class="layui-icon layui-icon-edit"></i>倉庫変更
+        </button>
+        <button type="button" lay-event="delete" class="layui-btn layui-btn-sm layui-btn-danger layui-btn-radius"><i
+                class="layui-icon layui-icon-delete"></i>倉庫削除
+        </button>
+    </div>
+</div>
+
+<!--追加/変更モーダル-->
+<div id="addOrUpdateDiv" style="display: none;padding: 10px;padding-right: 5%">
+    <form action="" method="post" class="layui-form" id="dataFrm" lay-filter="dataFrm">
+        <div class="layui-col-md12 layui-col-xs12">
+            <div class="layui-row layui-col-space10">
+                <div class="layui-col-md9 layui-col-xs7">
+                    <div class="layui-form-item magt3">
+                        <label class="layui-form-label">倉庫名</label>
+                        <div class="layui-input-block">
+                            <input type="hidden" name="houseId">
+                            <input type="hidden" name="goodsId">
+                            <input type="text" class="layui-input input-radius" name="houseName" lay-verify="required" placeholder="倉庫名を入力してください">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">住所</label>
+                        <div class="layui-input-block">
+                            <input type="text" class="layui-input input-radius" name="address" lay-verify="required" placeholder="住所を入力してください">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">警戒上限</label>
+                        <div class="layui-input-block">
+                            <input type="text" class="layui-input input-radius" name="upperAlert" lay-verify="required" placeholder="警戒上限を入力してください">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">警戒下限</label>
+                        <div class="layui-input-block">
+                            <input type="text" class="layui-input input-radius" name="underAlert" lay-verify="required" value="0" placeholder="警戒下限を入力してください" readonly="readonly">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block" style="text-align: center;padding-right: 7%">
+                <button type="button" class="layui-btn layui-btn-radius" lay-submit="" lay-filter="doSubmit" id="doSubmit"><i
+                        class="layui-icon layui-icon-search layui-icon-normal"></i>実行
+                </button>
+                <button type="reset" class="layui-btn layui-btn-radius layui-btn-warm"><i
+                        class="layui-icon layui-icon-refresh"></i><span>リセット</span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript" src="/resources/layui/layui.js"></script>
+
+<script type="text/javascript">
+    var tableIns;
+
+    layui.use(['jquery', 'form', 'layer', 'table'], function () {
+        var $ = layui.jquery;
+        var form = layui.form;
+        var layer = layui.layer;
+        var table = layui.table;
+        //結果テーブル初期化
+        tableIns = table.render({
+            elem: "#stockTable",
+            title: "商品データ",
+            url: "/stock/loadAllStock",
+            toolbar: "#stockToolBar",
+            page: true,
+            height: "full-180",
+            cols: [ [
+                {field: 'houseName', title: '倉庫名', align: 'center',sort: true},
+                {field: 'address', title: '住所', align: 'center'},
+                {field: 'name', title: '商品名', align: 'center',sort: true},
+                {field: 'price', title: '価格', align: 'center',sort: true},
+                {field: 'number', title: '在庫数', align: 'center'},
+                {field: 'size', title: '規格', align: 'center'},
+                {field: 'packages', title: '仕様', align: 'center'},
+                {field: 'upperAlert', title: '警戒上限', align: 'center'},
+                {field: 'underAlert', title: '警戒下限', align: 'center'},
+                {fixed: 'right', title: '操作', toolbar: '#stockRowBar', align: 'center',width:'250'}
+            ] ],
+            done: function (data, curr, count) {
+                if (data.data.length == 0 && curr != 1) {
+                    tableIns.reload({
+                        page: {
+                            curr: curr - 1
+                        }
+                    })
+                }
+            }
+        });
+
+        //プルダウンリスト初期化
+        $.get("/warehouse/loadAllHouseForSelect",function (res) {
+            var data = res.data;
+            var dom = $("#select_houseId");
+            var html = '<option value="">-- 倉庫名 --</option>';
+            $.each(data,function (index, item) {
+                html += '<option value="'+item.houseId+'">'+item.name+'</option>';
+            })
+            dom.html(html);
+            form.render("select");
+        });
+
+        //プルダウンリスト初期化
+        $.get("/goods/loadAllGoodsForSelect",function (res) {
+            var data = res.data;
+            var dom = $("#select_goodsId");
+            var html = '<option value="">-- 商品名 --</option>';
+            $.each(data,function (index, item) {
+                html += '<option value="'+item.goodsId+'">'+item.name+'</option>';
+            })
+            dom.html(html);
+            form.render("select");
+        });
+
+        //検索ボタン押下
+        form.on("submit(doSearch)", function (data) {
+            tableIns.reload({
+                where: data.field,
+                page: {
+                    curr: 1
+                }
+            });
+            return false;
+        });
+
+        //倉庫追加ボタン押下
+        table.on("toolbar(stockTable)", function (obj) {
+            switch (obj.event) {
+                case 'add':
+                    openAddLayer();
+                    break;
+            }
+        });
+
+        //変更・削除ボタン押下
+        table.on("tool(stockTable)", function (obj) {
+            //選択行
+            var data = obj.data;
+            switch (obj.event) {
+                case 'delete':
+                    deletehouse(data);
+                    break;
+                case 'update':
+                    updatehouse(data);
+                    break;
+            };
+        });
+        var mainIndex;
+        var url;
+
+        //倉庫追加モーダル
+        function openAddLayer() {
+            mainIndex = layer.open({
+                type:1,
+                content:$("#addOrUpdateDiv"),
+                area:['700px','380px'],
+                title:'倉庫追加',
+                success:function () {
+                    $("#dataFrm")[0].reset();
+                    url="/stock/addHouse";
+                }
+            });
+        }
+
+        //倉庫変更モーダル
+        function updatehouse(data) {
+            mainIndex = layer.open({
+                type:1,
+                content:$("#addOrUpdateDiv"),
+                area:['700px','380px'],
+                title:'倉庫変更',
+                success:function () {
+                    //クリア
+                    $("#dataFrm")[0].reset();
+                    //変更後データ
+                    form.val("dataFrm",data);
+                    url="/stock/updateHouse";
+                }
+            });
+        }
+
+        //実行
+        form.on("submit(doSubmit)",function (data) {
+            $.post(url,data.field,function (res) {
+                if (res.code==200){
+                    tableIns.reload();
+                }
+                layer.msg(res.msg);
+                layer.close(mainIndex);
+            });
+            return false;
+        });
+
+        //倉庫削除
+        function deletehouse(data) {
+            layer.confirm('倉庫【' + data.houseName + '】を削除します。削除前に在庫数量を0にしてください。', { btn: ['削除', 'キャンセル'], icon: 3, title: '注意'}, function (index) {
+                $.post("/stock/deleteHouse", {id:data.houseId},function (res) {
+                    if (res.code == 200) {
+                        tableIns.reload({
+                            where:"",
+                        });
+                        //プルダウンリスト初期化
+                        $.get("/warehouse/loadAllHouseForSelect",function (res) {
+                            var data = res.data;
+                            var dom = $("#select_houseId");
+                            var html = '<option value="">-- 倉庫名 --</option>';
+                            $.each(data,function (index, item) {
+                                html += '<option value="'+item.houseId+'">'+item.name+'</option>';
+                            })
+                            dom.html(html);
+                            //プルダウンリストリセット
+                            form.render("select");
+                        });
+                        //プルダウンリスト初期化
+                        $.get("/goods/loadAllGoodsForSelect",function (res) {
+                            var data = res.data;
+                            var dom = $("#select_goodsId");
+                            var html = '<option value="">-- 商品名 --</option>';
+                            $.each(data,function (index, item) {
+                                html += '<option value="'+item.goodsId+'">'+item.name+'</option>';
+                            })
+                            dom.html(html);
+                            //プルダウンリストリセット
+                            form.render("select");
+                        });
+                    }
+                    layer.msg(res.msg);
+                });
+                layer.close(index);
+            });
+        }
+
+
+    });
+</script>
+</body>
+</html>
